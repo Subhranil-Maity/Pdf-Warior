@@ -3,6 +3,7 @@ import { Toolbar } from './components/Toolbar';
 import { Sidebar } from './components/Sidebar';
 import { MainPreview } from './components/MainPreview';
 import { ContextMenu } from './components/ContextMenu';
+import { DragDropOverlay } from './components/DragDropOverlay';
 import { listenToMergeProgress, listenToMergeComplete, listenToMergeError } from './ipc';
 import { useStore } from './store';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -88,6 +89,7 @@ export default function App() {
         <MainPreview />
       </div>
       <ContextMenu />
+      <DragDropOverlay />
     </>
   );
 }

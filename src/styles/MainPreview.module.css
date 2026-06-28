@@ -26,19 +26,28 @@
 
 .emptyState {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 200px;
-  color: rgba(255, 255, 255, 0.4);
+  height: 240px;
+  color: rgba(255, 255, 255, 0.45);
   font-size: 14px;
   border: 1.5px dashed rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 40px;
   background: rgba(255, 255, 255, 0.01);
   text-align: center;
   margin-top: 100px;
   max-width: 400px;
+  width: 100%;
   line-height: 1.5;
+  transition: all 0.2s ease;
+}
+
+.emptyState:hover {
+  border-color: rgba(74, 144, 217, 0.4);
+  background: rgba(74, 144, 217, 0.02);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .image {
