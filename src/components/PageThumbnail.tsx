@@ -45,16 +45,19 @@ export function PageThumbnail({ page, index, onContextMenu }: Props) {
       {...listeners}
       {...attributes}
     >
-      <input
-        className={styles.checkbox}
-        type="checkbox"
-        checked={page.included}
-        onChange={(e) => {
-          e.stopPropagation();
-          togglePageIncluded(page.id);
-        }}
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className={styles.leftSection}>
+        <input
+          className={styles.checkbox}
+          type="checkbox"
+          checked={page.included}
+          onChange={(e) => {
+            e.stopPropagation();
+            togglePageIncluded(page.id);
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <span className={styles.pageNum}>{index + 1}</span>
+      </div>
       <div className={styles.imageContainer}>
         {page.thumbnailUrl ? (
           <img className={styles.image} src={page.thumbnailUrl} alt={`Page ${index + 1}`} draggable={false} />
@@ -62,7 +65,6 @@ export function PageThumbnail({ page, index, onContextMenu }: Props) {
           <div className={styles.skeleton} />
         )}
       </div>
-      <span className={styles.pageNum}>{index + 1}</span>
       {!page.included && <div className={styles.skipBadge}>SKIP</div>}
     </div>
   );
