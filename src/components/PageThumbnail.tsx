@@ -6,9 +6,10 @@ import styles from '../styles/PageThumbnail.module.css';
 interface Props {
   page: PageRef;
   index: number;
+  onContextMenu: (e: React.MouseEvent) => void;
 }
 
-export function PageThumbnail({ page, index }: Props) {
+export function PageThumbnail({ page, index, onContextMenu }: Props) {
   const sourceFiles = useStore(s => s.sourceFiles);
   const selectedPageId = useStore(s => s.selectedPageId);
   const togglePageIncluded = useStore(s => s.togglePageIncluded);
@@ -39,6 +40,7 @@ export function PageThumbnail({ page, index }: Props) {
       ref={setNodeRef}
       className={`${styles.thumb} ${isSelected ? styles.selected : ''} ${!page.included ? styles.excluded : ''}`}
       onClick={() => selectPage(page.id)}
+      onContextMenu={onContextMenu}
       style={style}
       {...listeners}
       {...attributes}

@@ -31,6 +31,7 @@ export interface AppState {
   reorderPages: (fromIndex: number, toIndex: number) => void;
   togglePageIncluded: (id: string) => void;
   toggleAllForFile: (path: string) => void;
+  removeFileGroup: (path: string) => void;
   selectPage: (id: string) => void;
   undo: () => void;
   redo: () => void;
@@ -195,5 +196,28 @@ export const useStore = create<AppState>((set, get) => ({
       console.error(e);
       set({ isProcessing: false });
     }
+  },
+
+  removeFileGroup: (path: string) => {
+    set((state) => {
+      const newSourceFiles = state.sourceFiles.filter(sf => sf.path !== path);
+      const newPages = state.pages.filter(p => p.sourceFile !== path);
+      
+      let nextSelectedPageId = state.selectedPageId;
+      if (state.selectedPageId) {
+        const selectedPage = state.pages.find(p => p.id === state.selectedPageId);
+        if (selectedPage && selectedPage.sourceFile === path) {
+          nextSelectedPageId = newPages.length > 0 ? newPages[0].id : null;
+        }
+      }
+
+      const historyUpdate = pushState(state, newPages);
+
+      return {
+        ...historyUpdate,
+        sourceFiles: newSourceFiles,
+        selectedPageId: nextSelectedPageId
+      };
+    });
   },
 }));

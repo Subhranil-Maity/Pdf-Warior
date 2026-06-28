@@ -30,21 +30,22 @@ export function Toolbar() {
 
   return (
     <div className={styles.toolbar}>
-      <button className={styles.button} onClick={handleOpen} disabled={isProcessing}>Open PDF(s)</button>
+      <button className={styles.button} onClick={handleOpen} disabled={isProcessing}>+ Add PDF</button>
       <div className={styles.divider} />
       <button className={styles.button} onClick={undo} disabled={!canUndo || isProcessing}>Undo</button>
       <button className={styles.button} onClick={redo} disabled={!canRedo || isProcessing}>Redo</button>
-      <div className={styles.divider} />
-      <button className={styles.button} onClick={save} disabled={!canSave || isProcessing}>Save →</button>
       
-      {isProcessing && (
-        <div className={styles.progressContainer}>
-          <span>Saving...</span>
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${processingProgress * 100}%` }} />
+      <div className={styles.saveGroup}>
+        {isProcessing && (
+          <div className={styles.progressContainer}>
+            <span>Saving...</span>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} style={{ width: `${processingProgress * 100}%` }} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        <button className={styles.saveButton} onClick={save} disabled={!canSave || isProcessing}>Save →</button>
+      </div>
     </div>
   );
 }

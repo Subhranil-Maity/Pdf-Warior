@@ -53,7 +53,7 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         const btns = Array.from(document.querySelectorAll('button'));
-        const openBtn = btns.find(b => b.textContent?.includes('Open PDF'));
+        const openBtn = btns.find(b => b.textContent?.includes('Add PDF'));
         if (openBtn) openBtn.click();
       }
       
