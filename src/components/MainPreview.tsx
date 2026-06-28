@@ -1,94 +1,75 @@
 import { useEffect, useState, useRef } from 'react';
-import { useStore } from '../store';
+import { useStore, PageRef } from '../store';
 import { renderPageToObjectUrl } from '../pdfRenderer';
 import styles from '../styles/MainPreview.module.css';
 
-export function MainPreview() {
-  const selectedPageId = useStore(s => s.selectedPageId);
-  const pages = useStore(s => s.pages);
-  const selectPage = useStore(s => s.selectPage);
-  
+function PreviewPage({ page }: { page: PageRef }) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const selectedPage = pages.find(p => p.id === selectedPageId);
-  const selectedIndex = pages.findIndex(p => p.id === selectedPageId);
 
   useEffect(() => {
-    if (!selectedPage) {
-      setImgUrl(null);
-      return;
-    }
-
     let isMounted = true;
-    setLoading(true);
+    let currentUrl: string | null = null;
     
-    // We revoke the PREVIOUS url right away or wait till the new one is ready?
-    // Let's just create a new one.
-    
-    renderPageToObjectUrl(selectedPage.sourceFile, selectedPage.sourcePageIndex, 1200)
+    renderPageToObjectUrl(page.sourceFile, page.sourcePageIndex, 1200)
       .then(url => {
         if (isMounted) {
-          setImgUrl(prev => {
-            if (prev) URL.revokeObjectURL(prev);
-            return url;
-          });
-          setLoading(false);
+          currentUrl = url;
+          setImgUrl(url);
         } else {
           URL.revokeObjectURL(url);
         }
       })
       .catch(err => {
         console.error("Preview render failed", err);
-        if (isMounted) setLoading(false);
       });
 
     return () => {
       isMounted = false;
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
     };
-  }, [selectedPage?.sourceFile, selectedPage?.sourcePageIndex]);
+  }, [page.sourceFile, page.sourcePageIndex]);
+
+  if (!imgUrl) {
+    return <div className={styles.loadingPage}>Loading preview...</div>;
+  }
+
+  return <img className={styles.image} src={imgUrl} alt="Preview" />;
+}
+
+export function MainPreview() {
+  const pages = useStore(s => s.pages);
+  const selectedPageId = useStore(s => s.selectedPageId);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const includedPages = pages.filter(p => p.included);
 
   useEffect(() => {
-    containerRef.current?.focus();
+    if (selectedPageId) {
+      const el = document.getElementById(`preview-page-${selectedPageId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
   }, [selectedPageId]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (pages.length === 0) return;
-    
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      const next = (selectedIndex + 1) % pages.length;
-      selectPage(pages[next].id);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prev = (selectedIndex - 1 + pages.length) % pages.length;
-      selectPage(pages[prev].id);
-    }
-  };
-
-  if (!selectedPage) {
+  if (includedPages.length === 0) {
     return (
       <div className={styles.container} tabIndex={0} ref={containerRef}>
-        <div className={styles.emptyState}>Open a PDF to get started</div>
+        <div className={styles.emptyState}>No pages included. Open a PDF or select pages to begin.</div>
       </div>
     );
   }
 
   return (
-    <div 
-      className={styles.container} 
-      tabIndex={0} 
-      ref={containerRef}
-      onKeyDown={handleKeyDown}
-    >
-      {loading ? (
-        <div className={styles.loading}>Loading preview...</div>
-      ) : imgUrl ? (
-        <img className={styles.image} src={imgUrl} alt="Preview" />
-      ) : (
-        <div className={styles.emptyState}>Failed to render</div>
-      )}
+    <div className={styles.container} tabIndex={0} ref={containerRef}>
+      <div className={styles.pageList}>
+        {includedPages.map((page, index) => (
+          <div key={page.id} id={`preview-page-${page.id}`} className={styles.pageWrapper}>
+            <PreviewPage page={page} />
+            <div className={styles.pageLabel}>Output Page {index + 1}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

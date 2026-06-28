@@ -19,6 +19,9 @@
 
 .thumb.selected {
   background-color: #3a3a3a;
+  outline: 2px solid #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+  z-index: 5;
 }
 
 .thumb.excluded {
