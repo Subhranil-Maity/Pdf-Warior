@@ -9,12 +9,26 @@ export interface PageRef {
   sourcePageIndex: number;
   included: boolean;
   thumbnailUrl: string | null;
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+  width?: number;
+  height?: number;
 }
 
 export interface SourceFile {
   path: string;
   pageCount: number;
   color: string;
+}
+
+export interface ContextMenuState {
+  x: number;
+  y: number;
+  type: 'group' | 'page';
+  filePath: string;
+  pageId?: string;
+  pageIndex?: number;
 }
 
 export interface AppState {
@@ -25,6 +39,7 @@ export interface AppState {
   historyIndex: number;
   isProcessing: boolean;
   processingProgress: number;
+  contextMenu: ContextMenuState | null;
 
   openFiles: (paths: string[]) => Promise<void>;
   loadThumbnailsForFile: (path: string, pageCount: number) => void;
@@ -38,6 +53,10 @@ export interface AppState {
   save: () => Promise<void>;
   setIsProcessing: (isProcessing: boolean) => void;
   setProcessingProgress: (progress: number) => void;
+  setContextMenu: (menu: ContextMenuState | null) => void;
+  rotatePage: (id: string, direction: 'left' | 'right') => void;
+  flipPage: (id: string, axis: 'long' | 'short') => void;
+  savePageIndividually: (id: string) => Promise<void>;
 }
 
 const COLORS = ["#4A90D9", "#E57373", "#66BB6A", "#FFA726", "#AB47BC", "#26C6DA", "#8D6E63", "#EC407A"];
@@ -60,9 +79,11 @@ export const useStore = create<AppState>((set, get) => ({
   historyIndex: -1,
   isProcessing: false,
   processingProgress: 0,
+  contextMenu: null,
 
   setIsProcessing: (isProcessing) => set({ isProcessing }),
   setProcessingProgress: (processingProgress) => set({ processingProgress }),
+  setContextMenu: (contextMenu) => set({ contextMenu }),
 
   openFiles: async (paths: string[]) => {
     const { sourceFiles, pages } = get();
@@ -86,6 +107,9 @@ export const useStore = create<AppState>((set, get) => ({
           sourcePageIndex: i,
           included: true,
           thumbnailUrl: null,
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
         });
       }
       
@@ -106,12 +130,12 @@ export const useStore = create<AppState>((set, get) => ({
       
       await Promise.all(batch.map(async (pageIndex) => {
         try {
-          const url = await renderPageToObjectUrl(path, pageIndex, 200);
+          const { url, width, height } = await renderPageToObjectUrl(path, pageIndex, 200);
           
           set((state) => ({
             pages: state.pages.map(p => 
               (p.sourceFile === path && p.sourcePageIndex === pageIndex) 
-                ? { ...p, thumbnailUrl: url } 
+                ? { ...p, thumbnailUrl: url, width, height } 
                 : p
             )
           }));
@@ -181,6 +205,9 @@ export const useStore = create<AppState>((set, get) => ({
       .map(p => ({
         source_file: p.sourceFile,
         source_page_index: p.sourcePageIndex,
+        rotation: p.rotation || 0,
+        flip_horizontal: p.flipHorizontal || false,
+        flip_vertical: p.flipVertical || false,
       }));
 
     if (manifest.length === 0) return;
@@ -196,6 +223,85 @@ export const useStore = create<AppState>((set, get) => ({
       console.error(e);
       set({ isProcessing: false });
     }
+  },
+
+  savePageIndividually: async (id: string) => {
+    const { pages } = get();
+    const page = pages.find(p => p.id === id);
+    if (!page) return;
+
+    const manifest = [{
+      source_file: page.sourceFile,
+      source_page_index: page.sourcePageIndex,
+      rotation: page.rotation || 0,
+      flip_horizontal: page.flipHorizontal || false,
+      flip_vertical: page.flipVertical || false,
+    }];
+
+    const basename = (p: string) => p.split(/[\\/]/).pop() || p;
+    const fileBase = basename(page.sourceFile).replace(/\.pdf$/i, '');
+    const defaultName = `${fileBase}_page_${page.sourcePageIndex + 1}.pdf`;
+
+    const path = await pickSavePath(defaultName);
+    if (!path) return;
+
+    set({ isProcessing: true, processingProgress: 0 });
+
+    try {
+      await mergeAndSave(manifest, path);
+    } catch (e) {
+      console.error(e);
+      set({ isProcessing: false });
+    }
+  },
+
+  rotatePage: (id: string, direction: 'left' | 'right') => {
+    set((state) => {
+      const newPages = state.pages.map(p => {
+        if (p.id !== id) return p;
+        const currentRotation = p.rotation || 0;
+        const delta = direction === 'left' ? -90 : 90;
+        const rotation = (currentRotation + delta + 360) % 360;
+        return { ...p, rotation };
+      });
+      return pushState(state, newPages);
+    });
+  },
+
+  flipPage: (id: string, axis: 'long' | 'short') => {
+    set((state) => {
+      const newPages = state.pages.map(p => {
+        if (p.id !== id) return p;
+
+        const width = p.width || 3;
+        const height = p.height || 4;
+        const currentRotation = p.rotation || 0;
+
+        const isPortrait = (currentRotation === 0 || currentRotation === 180)
+          ? (width <= height)
+          : (width > height);
+
+        let flipHorizontal = p.flipHorizontal || false;
+        let flipVertical = p.flipVertical || false;
+
+        if (axis === 'long') {
+          if (isPortrait) {
+            flipHorizontal = !flipHorizontal;
+          } else {
+            flipVertical = !flipVertical;
+          }
+        } else {
+          if (isPortrait) {
+            flipVertical = !flipVertical;
+          } else {
+            flipHorizontal = !flipHorizontal;
+          }
+        }
+
+        return { ...p, flipHorizontal, flipVertical };
+      });
+      return pushState(state, newPages);
+    });
   },
 
   removeFileGroup: (path: string) => {

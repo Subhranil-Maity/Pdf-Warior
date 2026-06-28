@@ -1,34 +1,15 @@
-import { useState, useEffect } from 'react';
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useStore } from '../store';
 import { PageThumbnail } from './PageThumbnail';
 import styles from '../styles/Sidebar.module.css';
 
-interface ContextMenuState {
-  x: number;
-  y: number;
-  type: 'group' | 'page';
-  filePath: string;
-  pageId?: string;
-  pageIndex?: number;
-}
-
 export function Sidebar() {
   const sourceFiles = useStore(s => s.sourceFiles);
   const pages = useStore(s => s.pages);
   const toggleAllForFile = useStore(s => s.toggleAllForFile);
   const reorderPages = useStore(s => s.reorderPages);
-  const removeFileGroup = useStore(s => s.removeFileGroup);
-  const togglePageIncluded = useStore(s => s.togglePageIncluded);
-
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-
-  useEffect(() => {
-    const handleClose = () => setContextMenu(null);
-    window.addEventListener('click', handleClose);
-    return () => window.removeEventListener('click', handleClose);
-  }, []);
+  const setContextMenu = useStore(s => s.setContextMenu);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -99,62 +80,6 @@ export function Sidebar() {
               ))}
             </SortableContext>
           </DndContext>
-        </div>
-      )}
-
-      {contextMenu && (
-        <div
-          className={styles.contextMenu}
-          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles.contextHeader} title={contextMenu.filePath}>
-            {basename(contextMenu.filePath)}
-          </div>
-          <div className={styles.contextDivider} />
-          
-          <button
-            className={`${styles.contextItem} ${styles.dangerItem}`}
-            onClick={() => {
-              removeFileGroup(contextMenu.filePath);
-              setContextMenu(null);
-            }}
-          >
-            🗑️ Remove PDF Group
-          </button>
-          
-          <button
-            className={styles.contextItem}
-            onClick={() => {
-              toggleAllForFile(contextMenu.filePath);
-              setContextMenu(null);
-            }}
-          >
-            👁️ Toggle All Pages
-          </button>
-          
-          {contextMenu.type === 'page' && contextMenu.pageId && (
-            <>
-              <button
-                className={styles.contextItem}
-                onClick={() => {
-                  if (contextMenu.pageId) togglePageIncluded(contextMenu.pageId);
-                  setContextMenu(null);
-                }}
-              >
-                📄 Toggle This Page
-              </button>
-              <div className={styles.contextDivider} />
-              <div className={styles.contextDetail}>
-                Source Page Index: {contextMenu.pageIndex! + 1}
-              </div>
-            </>
-          )}
-          
-          <div className={styles.contextDivider} />
-          <div className={styles.contextDetail} title={contextMenu.filePath}>
-            Path: {contextMenu.filePath}
-          </div>
         </div>
       )}
     </aside>

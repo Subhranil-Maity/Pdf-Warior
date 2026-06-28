@@ -35,6 +35,21 @@ export function PageThumbnail({ page, index, onContextMenu }: Props) {
 
   const isSelected = selectedPageId === page.id;
 
+  const width = page.width || 3;
+  const height = page.height || 4;
+  const isPortrait = (page.rotation === 0 || page.rotation === 180)
+    ? (width <= height)
+    : (width > height);
+
+  const containerStyle = {
+    aspectRatio: isPortrait ? '1 / 1.4142' : '1.4142 / 1',
+  };
+
+  const transformStyle = {
+    transform: `rotate(${page.rotation || 0}deg) scaleX(${page.flipHorizontal ? -1 : 1}) scaleY(${page.flipVertical ? -1 : 1})`,
+    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -58,9 +73,15 @@ export function PageThumbnail({ page, index, onContextMenu }: Props) {
         />
         <span className={styles.pageNum}>{index + 1}</span>
       </div>
-      <div className={styles.imageContainer}>
+      <div className={styles.imageContainer} style={containerStyle}>
         {page.thumbnailUrl ? (
-          <img className={styles.image} src={page.thumbnailUrl} alt={`Page ${index + 1}`} draggable={false} />
+          <img 
+            className={styles.image} 
+            src={page.thumbnailUrl} 
+            alt={`Page ${index + 1}`} 
+            draggable={false} 
+            style={transformStyle}
+          />
         ) : (
           <div className={styles.skeleton} />
         )}

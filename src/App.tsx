@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { Sidebar } from './components/Sidebar';
 import { MainPreview } from './components/MainPreview';
+import { ContextMenu } from './components/ContextMenu';
 import { listenToMergeProgress, listenToMergeComplete, listenToMergeError } from './ipc';
 import { useStore } from './store';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -15,6 +16,7 @@ export default function App() {
   const save = useStore(s => s.save);
   const pages = useStore(s => s.pages);
   const sourceFiles = useStore(s => s.sourceFiles);
+  const setContextMenu = useStore(s => s.setContextMenu);
 
   useEffect(() => {
     const unlistenProgress = listenToMergeProgress((done, total) => {
@@ -72,6 +74,12 @@ export default function App() {
     appWindow.setTitle(`PDF Editor — ${sourceFiles.length} files, ${pages.length} pages`);
   }, [sourceFiles.length, pages.length]);
 
+  useEffect(() => {
+    const handleClose = () => setContextMenu(null);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, [setContextMenu]);
+
   return (
     <>
       <Toolbar />
@@ -79,6 +87,7 @@ export default function App() {
         <Sidebar />
         <MainPreview />
       </div>
+      <ContextMenu />
     </>
   );
 }

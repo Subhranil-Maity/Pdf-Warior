@@ -7,6 +7,17 @@ use std::collections::HashMap;
 pub struct PageManifestEntry {
     pub source_file: String,
     pub source_page_index: u32,
+    pub rotation: i32,
+    pub flip_horizontal: bool,
+    pub flip_vertical: bool,
+}
+
+fn get_float(obj: &Object) -> Option<f32> {
+    match obj {
+        Object::Integer(i) => Some(*i as f32),
+        Object::Real(f) => Some(*f as f32),
+        _ => None,
+    }
 }
 
 pub fn page_count(path: &str) -> Result<u32> {
@@ -127,6 +138,83 @@ where
         // Update Parent reference in the copied page object
         if let Ok(Object::Dictionary(ref mut page_dict)) = out_doc.get_object_mut(new_page_id) {
             page_dict.set("Parent", pages_id);
+        }
+
+        // Apply rotation if needed
+        if entry.rotation != 0 {
+            let mut existing_rotation = 0;
+            if let Ok(Object::Dictionary(ref page_dict)) = out_doc.get_object(new_page_id) {
+                if let Ok(Object::Integer(r)) = page_dict.get(b"Rotate") {
+                    existing_rotation = *r;
+                }
+            }
+            let new_rotation = (existing_rotation + entry.rotation as i64) % 360;
+            let new_rotation = (new_rotation + 360) % 360;
+            if let Ok(Object::Dictionary(ref mut page_dict)) = out_doc.get_object_mut(new_page_id) {
+                page_dict.set("Rotate", Object::Integer(new_rotation));
+            }
+        }
+
+        // Apply flips (horizontal / vertical) if needed
+        if entry.flip_horizontal || entry.flip_vertical {
+            let mut media_box = vec![0.0, 0.0, 612.0, 792.0]; // default US letter
+            let mut contents_obj = None;
+
+            if let Ok(Object::Dictionary(ref page_dict)) = out_doc.get_object(new_page_id) {
+                if let Ok(Object::Array(ref arr)) = page_dict.get(b"MediaBox") {
+                    if arr.len() >= 4 {
+                        for (idx, val) in arr.iter().take(4).enumerate() {
+                            if let Some(num) = get_float(val) {
+                                media_box[idx] = num;
+                            }
+                        }
+                    }
+                }
+                if let Ok(contents) = page_dict.get(b"Contents") {
+                    contents_obj = Some(contents.clone());
+                }
+            }
+
+            let x_ll = media_box[0];
+            let y_ll = media_box[1];
+            let x_ur = media_box[2];
+            let y_ur = media_box[3];
+
+            let tx = x_ll + x_ur;
+            let ty = y_ll + y_ur;
+
+            let scale_x = if entry.flip_horizontal { -1.0 } else { 1.0 };
+            let scale_y = if entry.flip_vertical { -1.0 } else { 1.0 };
+            let tx_val = if entry.flip_horizontal { tx } else { 0.0 };
+            let ty_val = if entry.flip_vertical { ty } else { 0.0 };
+
+            let prepend_content = format!("q {} 0 0 {} {} {} cm\n", scale_x, scale_y, tx_val, ty_val);
+            let prepend_stream = lopdf::Stream::new(lopdf::Dictionary::new(), prepend_content.into_bytes());
+            let prepend_id = out_doc.add_object(prepend_stream);
+
+            let append_stream = lopdf::Stream::new(lopdf::Dictionary::new(), b"\nQ\n".to_vec());
+            let append_id = out_doc.add_object(append_stream);
+
+            let mut new_contents = vec![Object::Reference(prepend_id)];
+            if let Some(ref contents) = contents_obj {
+                match contents {
+                    Object::Reference(ref_id) => {
+                        new_contents.push(Object::Reference(*ref_id));
+                    }
+                    Object::Array(arr) => {
+                        new_contents.extend(arr.clone());
+                    }
+                    other => {
+                        let direct_id = out_doc.add_object(other.clone());
+                        new_contents.push(Object::Reference(direct_id));
+                    }
+                }
+            }
+            new_contents.push(Object::Reference(append_id));
+
+            if let Ok(Object::Dictionary(ref mut page_dict)) = out_doc.get_object_mut(new_page_id) {
+                page_dict.set("Contents", Object::Array(new_contents));
+            }
         }
         
         kids.push(Object::Reference(new_page_id));

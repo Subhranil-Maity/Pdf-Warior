@@ -4,6 +4,9 @@ import { listen } from '@tauri-apps/api/event';
 export interface PageManifestEntry {
   source_file: string;
   source_page_index: number;
+  rotation: number;
+  flip_horizontal: boolean;
+  flip_vertical: boolean;
 }
 
 export async function getPageCount(path: string): Promise<number> {

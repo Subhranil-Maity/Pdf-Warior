@@ -10,7 +10,7 @@ export async function renderPageToObjectUrl(
   filePath: string,
   pageIndex: number,
   targetWidth: number
-): Promise<string> {
+): Promise<{ url: string; width: number; height: number }> {
   const loadingTask = pdfjs.getDocument({ url: convertFileSrc(filePath) });
   const pdf = await loadingTask.promise;
   const page = await pdf.getPage(pageIndex + 1);
@@ -34,7 +34,7 @@ export async function renderPageToObjectUrl(
 
   await page.render(renderContext).promise;
 
-  return new Promise((resolve, reject) => {
+  const url = await new Promise<string>((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) {
         resolve(URL.createObjectURL(blob));
@@ -43,4 +43,6 @@ export async function renderPageToObjectUrl(
       }
     }, 'image/png');
   });
+
+  return { url, width: viewport.width, height: viewport.height };
 }
