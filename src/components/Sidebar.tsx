@@ -1,4 +1,4 @@
-import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useStore } from '../store';
 import { PageThumbnail } from './PageThumbnail';
@@ -10,6 +10,12 @@ export function Sidebar() {
   const toggleAllForFile = useStore(s => s.toggleAllForFile);
   const reorderPages = useStore(s => s.reorderPages);
   const setContextMenu = useStore(s => s.setContextMenu);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -57,7 +63,7 @@ export function Sidebar() {
 
       {pages.length > 0 && (
         <div className={styles.pagesContainer}>
-          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={pages.map(p => p.id)} strategy={verticalListSortingStrategy}>
               {pages.map((page, i) => (
                 <PageThumbnail
