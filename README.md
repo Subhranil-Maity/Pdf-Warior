@@ -9,6 +9,12 @@ A powerful desktop PDF editor built with **Tauri**, **React**, and **TypeScript*
 
 ---
 
+## Demo
+
+https://github.com/user-attachments/assets/fb321e03-d542-450c-bd89-a764a176a791
+
+---
+
 ## Features
 
 ### Core
@@ -45,27 +51,27 @@ A powerful desktop PDF editor built with **Tauri**, **React**, and **TypeScript*
 
 ## Keyboard Shortcuts
 
-| Action | Shortcut |
-|---|---|
-| Open PDFs | `Ctrl` / `Cmd` + `O` |
-| Save / Merge | `Ctrl` / `Cmd` + `S` |
-| Undo | `Ctrl` / `Cmd` + `Z` |
-| Redo | `Ctrl` / `Cmd` + `Shift` + `Z` |
+| Action       | Shortcut                       |
+| ------------ | ------------------------------ |
+| Open PDFs    | `Ctrl` / `Cmd` + `O`           |
+| Save / Merge | `Ctrl` / `Cmd` + `S`           |
+| Undo         | `Ctrl` / `Cmd` + `Z`           |
+| Redo         | `Ctrl` / `Cmd` + `Shift` + `Z` |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Desktop shell | Tauri 2 |
-| Backend | Rust — `lopdf`, `pdfium-render`, `image` |
-| Frontend | React 19 + TypeScript + Vite |
-| State | Zustand |
-| PDF preview | pdfjs-dist |
-| Drag-and-drop | @dnd-kit |
-| Styling | CSS Modules |
-| Font | Outfit (Google Fonts) |
+| Layer         | Technology                               |
+| ------------- | ---------------------------------------- |
+| Desktop shell | Tauri 2                                  |
+| Backend       | Rust — `lopdf`, `pdfium-render`, `image` |
+| Frontend      | React 19 + TypeScript + Vite             |
+| State         | Zustand                                  |
+| PDF preview   | pdfjs-dist                               |
+| Drag-and-drop | @dnd-kit                                 |
+| Styling       | CSS Modules                              |
+| Font          | Outfit (Google Fonts)                    |
 
 ---
 
