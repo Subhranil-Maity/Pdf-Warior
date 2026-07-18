@@ -2,6 +2,7 @@
 
 A powerful desktop PDF editor built with **Tauri**, **React**, and **TypeScript**. Visually combine, reorder, split, rotate, and flip pages from multiple PDFs — then export a polished merged result.
 
+[![Download Badge](https://img.shields.io/github/v/release/Subhranil-Maity/Pdf-Warior)](https://github.com/Subhranil-Maity/Pdf-Warior/releases/tag/v1.0.0)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-blue?logo=tauri)
 ![React](https://img.shields.io/badge/React-19-61dafb?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)
@@ -77,14 +78,20 @@ https://github.com/user-attachments/assets/fb321e03-d542-450c-bd89-a764a176a791
 
 ## Getting Started
 
-### Prerequisites
+### Prebuilt Binaries
+
+No need to build from source — grab the latest prebuilt binary for your platform from the [**Releases**](https://github.com/Subhranil-Maity/Pdf-Warior/releases) section.
+
+### Build from Source
+
+#### Prerequisites
 
 - [Rust](https://rustup.rs/) (stable toolchain)
 - [Node.js](https://nodejs.org/) (18+)
 - [Bun](https://bun.sh/) (or npm / yarn)
 - [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
-### Install & Run
+#### Install & Run
 
 ```bash
 # install dependencies
